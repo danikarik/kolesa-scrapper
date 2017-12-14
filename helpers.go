@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/gocolly/colly"
 )
 
 // GetPhoneNumber получает номера
@@ -40,4 +44,35 @@ func GetPhoneNumber(id int) (string, error) {
 	}
 
 	return ajaxModel.Data.Model.Phone, nil
+}
+
+// GetOLDCars парсит авто с пробегом
+func GetOLDCars() error {
+
+	file, err := os.Create("old_cars.csv")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	writer.Comma = ';'
+	defer writer.Flush()
+
+	// Write CSV header
+	writer.Write([]string{"Name", "Phone"})
+
+	// Instantiate default collector
+	c := colly.NewCollector()
+
+	c.OnHTML("div.pager li a", func(e *colly.HTMLElement) {
+		writer.Write([]string{
+			"test",
+			e.Attr("href"),
+		})
+	})
+
+	c.Visit(OLDCARSURL)
+
+	return nil
 }
