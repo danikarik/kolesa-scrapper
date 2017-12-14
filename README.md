@@ -1,2 +1,2 @@
-# kolesa-scrapper
+# kolesa scrapper
 kolesa.kz web scrapper
