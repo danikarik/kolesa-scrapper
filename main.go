@@ -26,17 +26,12 @@ func main() {
 
 	switch *PARSEMODE {
 	case "old":
-		// id := 38982249
-		// phone, err := GetPhoneNumber(id)
-		// if err != nil {
-		// 	log.Fatalln(err)
-		// }
-		// log.Println(phone)
-		GetOLDCars()
+		GetCars(OLDCARSURL, "out/old_cars.csv")
 	case "new":
-		log.Println("not implemented")
+		GetCars(NEWCARSURL, "out/new_cars.csv")
 	case "all":
-		log.Println("also not implemented")
+		GetCars(OLDCARSURL, "out/old_cars.csv")
+		GetCars(NEWCARSURL, "out/new_cars.csv")
 	default:
 		log.Println("specify PARSEMODE")
 	}

@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/gocolly/colly"
 )
@@ -15,10 +17,7 @@ import (
 // GetPhoneNumber получает номера
 func GetPhoneNumber(id int) (string, error) {
 
-	showURL := fmt.Sprintf("%s%d", SHOWURL, id)
 	phoneURL := fmt.Sprintf("%s?id=%d", PHONEURL, id)
-
-	log.Printf("parsing: %s\n", showURL)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", phoneURL, nil)
@@ -43,13 +42,13 @@ func GetPhoneNumber(id int) (string, error) {
 		return "", err
 	}
 
-	return ajaxModel.Data.Model.Phone, nil
+	return strings.Replace(ajaxModel.Data.Model.Phone, ", ", "\n", -1), nil
 }
 
-// GetOLDCars парсит авто с пробегом
-func GetOLDCars() error {
+// GetCars парсит страницу с авто
+func GetCars(CARSURL, FILENAME string) error {
 
-	file, err := os.Create("old_cars.csv")
+	file, err := os.Create(FILENAME)
 	if err != nil {
 		return err
 	}
@@ -60,19 +59,78 @@ func GetOLDCars() error {
 	defer writer.Flush()
 
 	// Write CSV header
-	writer.Write([]string{"Name", "Phone"})
+	writer.Write([]string{"Brand", "Name", "Year", "City", "Volume", "Phone"})
+
+	var cnt int
 
 	// Instantiate default collector
 	c := colly.NewCollector()
 
 	c.OnHTML("div.pager li a", func(e *colly.HTMLElement) {
-		writer.Write([]string{
-			"test",
-			e.Attr("href"),
-		})
+		cnt, _ = strconv.Atoi(e.Attr("href")[12:len(e.Attr("href"))])
 	})
 
-	c.Visit(OLDCARSURL)
+	c.Visit(CARSURL)
+
+	for i := 1; i <= cnt; i++ {
+		url := fmt.Sprintf("%s?page=%d", CARSURL, i)
+		log.Println(url)
+		c = colly.NewCollector()
+		c.OnHTML("div[id^='advert']", func(e *colly.HTMLElement) {
+			divID := e.Attr("id")
+			if !strings.Contains(divID, "note-editor") {
+				dataID, _ := strconv.Atoi(e.Attr("data-id"))
+				url = fmt.Sprintf("%s%d", SHOWURL, dataID)
+				log.Println(url)
+				car := Car{}
+				c = colly.NewCollector()
+				headidx := 0
+				infoidx := 0
+				c.OnHTML("div.product header h1 span", func(e *colly.HTMLElement) {
+					if headidx == 0 {
+						car.Brand = e.Text
+					}
+					if headidx == 1 {
+						car.Name = e.Text
+					}
+					if headidx == 2 {
+						car.Year = strings.Trim(e.Text, " ")
+					}
+					headidx++
+				})
+				c.OnHTML("div.description-body dl dd", func(e *colly.HTMLElement) {
+					if infoidx == 0 {
+						if e.Text == "На заказ" {
+							infoidx--
+						} else {
+							car.City = e.Text
+						}
+					}
+					if infoidx == 2 {
+						vol := strings.Trim(strings.Replace(e.Text, "\n", "", -1), " ")
+						car.Volume = vol
+					}
+					infoidx++
+				})
+				c.Visit(url)
+				// GET PHONE NUMBER
+				phone, err := GetPhoneNumber(dataID)
+				if err != nil {
+					log.Println("no phone number")
+				}
+				// WRITE ROW
+				writer.Write([]string{
+					car.Brand,
+					car.Name,
+					car.Year,
+					car.City,
+					car.Volume,
+					phone,
+				})
+			}
+		})
+		c.Visit(url)
+	}
 
 	return nil
 }

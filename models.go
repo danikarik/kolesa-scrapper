@@ -17,3 +17,16 @@ type DataModel struct {
 type PhoneModel struct {
 	Phone string `json:"phone" binding:"required"`
 }
+
+// Car -
+type Car struct {
+	Brand  string
+	Name   string
+	Year   string
+	City   string
+	Volume string
+}
+
+func (c *Car) getHeader() string {
+	return c.Brand + " " + c.Name + " " + c.Year
+}
