@@ -75,7 +75,7 @@ func GetCars(CARSURL, FILENAME string, wg *sync.WaitGroup) error {
 
 	c.Visit(CARSURL)
 
-	for i := 1; i <= 1; i++ {
+	for i := 1; i <= cnt; i++ {
 		url := fmt.Sprintf("%s?page=%d", CARSURL, i)
 		log.Println(url)
 		c = colly.NewCollector()
