@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"log"
+	"sync"
+	"time"
 )
 
 const (
@@ -23,16 +25,27 @@ var (
 
 func main() {
 	flag.Parse()
-
+	start := time.Now()
 	switch *PARSEMODE {
 	case "old":
-		GetCars(OLDCARSURL, "out/old_cars.csv")
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go GetCars(OLDCARSURL, "out/old_cars.csv", &wg)
+		wg.Wait()
 	case "new":
-		GetCars(NEWCARSURL, "out/new_cars.csv")
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go GetCars(NEWCARSURL, "out/new_cars.csv", &wg)
+		wg.Wait()
 	case "all":
-		GetCars(OLDCARSURL, "out/old_cars.csv")
-		GetCars(NEWCARSURL, "out/new_cars.csv")
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go GetCars(OLDCARSURL, "out/old_cars.csv", &wg)
+		go GetCars(NEWCARSURL, "out/new_cars.csv", &wg)
+		wg.Wait()
 	default:
 		log.Println("specify PARSEMODE")
 	}
+	elapsed := time.Since(start)
+	log.Printf("parsing took %s", elapsed)
 }

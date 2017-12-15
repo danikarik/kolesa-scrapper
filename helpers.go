@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gocolly/colly"
 )
@@ -46,7 +47,9 @@ func GetPhoneNumber(id int) (string, error) {
 }
 
 // GetCars парсит страницу с авто
-func GetCars(CARSURL, FILENAME string) error {
+func GetCars(CARSURL, FILENAME string, wg *sync.WaitGroup) error {
+
+	defer wg.Done()
 
 	file, err := os.Create(FILENAME)
 	if err != nil {
@@ -72,7 +75,7 @@ func GetCars(CARSURL, FILENAME string) error {
 
 	c.Visit(CARSURL)
 
-	for i := 1; i <= cnt; i++ {
+	for i := 1; i <= 1; i++ {
 		url := fmt.Sprintf("%s?page=%d", CARSURL, i)
 		log.Println(url)
 		c = colly.NewCollector()
