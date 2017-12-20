@@ -70,7 +70,7 @@ func GetCars(CARSURL, FILENAME string, wg *sync.WaitGroup) error {
 	c := colly.NewCollector()
 
 	c.OnHTML("div.pager li a", func(e *colly.HTMLElement) {
-		cnt, _ = strconv.Atoi(e.Attr("href")[12:len(e.Attr("href"))])
+		cnt, _ = strconv.Atoi(e.Text)
 	})
 
 	c.Visit(CARSURL)
